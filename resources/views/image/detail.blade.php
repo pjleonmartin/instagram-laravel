@@ -3,10 +3,10 @@
 @section('content')
 <div class="container">
     <div class="row justify-content-center">
-        <div class="col-md-8">
+        <div class="col-md-10">
             @include('includes.message')
-            @foreach($images as $image)
-            <div class="card pub_image">
+
+            <div class="card pub_image pub_image_detail">
                 <div class="card-header">
                     @if($image->user->image)
                     <div class="container-avatar">
@@ -14,17 +14,15 @@
                     </div>
                     @endif
                     <div class="data-user">
-                        <a href="{{ route('image.detail', ['id' => $image->id]) }}">
                         {{$image->user->name.' '.$image->user->surname}}
                         <span class="nickname">
                             {{ ' | @'.$image->user->nick }}
                         </span>
-                        </a>
                     </div>
                 </div>
 
                 <div class="card-body">
-                    <div class="image-container">
+                    <div class="image-container image-detail">
                         <img src="{{ route('image.file', ['filename' => $image->image_path]) }}" />
                     </div>         
                     
@@ -49,18 +47,44 @@
                         @endif
                         <span class="number_likes">{{ count($image->likes) }}</span>
                     </div>
-                    
+                    <div class="clearfix"></div>
                     <div class="comments">
-                        <a href="" class="btn btn-sm btn-warning btn-comments">
-                            Comentarios ({{ count($image->comments) }})
-                        </a>
+                        <h2>Comentarios ({{ count($image->comments) }})</h2>
+                        <hr>
+                        
+                        <form method="POST" action="{{ route('comment.save') }}">
+                            @csrf
+                            
+                            <input type="hidden" name="image_id" value="{{ $image->id }}" />
+                            <p>
+                                <textarea class="form-control {{ $errors->has('content') ? 'is-invalid' : '' }}" name="content"></textarea>
+                                @if($errors->has('content'))
+                                <span class="invalid-feedback" role="alert">
+                                    <strong>{{ $errors->first('content') }}</strong>
+                                </span>
+                                @endif
+                            </p>
+                            <button type="submit" class="btn btn-success">Enviar</button>
+                        </form>
+                        <hr>
+                        @foreach($image->comments as $comment)
+                        <div class="comment">
+                            
+                            <span class="nickname">{{'@'.$comment->user->nick }}</span>
+                            <span class="nickname date">{{' | '.\FormatTime::LongTimeFilter($comment->created_at) }}</span>
+                            <p>{{ $comment->content }}<br>
+                            @if(Auth::check() && ($comment->user_id == Auth::user()->id || $comment->image->id == Auth::user()->id))
+                                <a href="{{ route('comment.delete', ['id' => $comment->id]) }}" class="btn btn-sm btn-danger">
+                                    Eliminar
+                                </a>
+                            @endif
+                            </p>
+                        </div>
+                        @endforeach
+                        
                     </div>
                 </div>
             </div>
-            @endforeach
-            <!-- PAGINACIÓN -->
-            <div class="clearfix"></div>
-            {{$images->links()}}
         </div>
     </div>
 </div>
